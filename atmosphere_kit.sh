@@ -728,7 +728,6 @@ bootprotect=0
 [CFW emuMMC]
 emummcforce=1
 fss0=atmosphere/package3
-kip1patch=nosigchk
 atmosphere=1
 icon=bootloader/res/icon_Atmosphere_emunand.bmp
 id=cfw-emu
@@ -998,7 +997,7 @@ finalize_setup() {
     # booted so Tesla Menu can expose ovl-sysmodules for manual toggling.
     if [ -d atmosphere/contents ]; then
         local removed_boot2_flags=0
-        local ovlloader_dir="" syspatch_dir=""
+        local ovlloader_dir=""
         local title_dir
 
         removed_boot2_flags=$(find atmosphere/contents -type f -name "boot2.flag" -print | wc -l | tr -d ' ')
@@ -1008,9 +1007,9 @@ finalize_setup() {
             [ -d "$title_dir" ] || continue
             case "$(basename "$title_dir")" in
                 420000000007E51A|420000000007E51A*)
-                    ovlloader_dir="$title_dir" ;;
-                420000000000000B|420000000000000B*)
-                    syspatch_dir="$title_dir" ;;
+                    ovlloader_dir="$title_dir"
+                    break
+                    ;;
             esac
         done
 
@@ -1022,18 +1021,6 @@ finalize_setup() {
             log_error "Enable nx-ovlloader for Tesla/ovl-sysmodules (not found)"
             record_failure "nx-ovlloader boot2 enable"
         fi
-
-        # sys-patch must run at boot to apply nosigchk/ES patches before titles launch.
-        # It cannot be deferred to manual Tesla toggle.
-        if [ -n "$syspatch_dir" ]; then
-            mkdir -p "${syspatch_dir}/flags"
-            touch "${syspatch_dir}/flags/boot2.flag"
-            log_success "Enabled sys-patch for boot-time signature patching"
-        else
-            log_error "Enable sys-patch (not found — nosigchk will fail)"
-            record_failure "sys-patch boot2 enable"
-        fi
-
         log_info "Removed ${removed_boot2_flags} other boot2.flag file(s) from atmosphere/contents"
     fi
     
