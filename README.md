@@ -62,6 +62,12 @@
 | huangqian8/SwitchScript（主要上游） | https://github.com/huangqian8/SwitchScript |
 | Fraxalotl（原始脚本作者） | https://rentry.org/CFWGuides |
 
+## 参考资料
+
+| 资料 | 地址 |
+|------|------|
+| Switchbrew Title List（Switch 官方及 Homebrew Title ID 总表） | https://switchbrew.org/wiki/Title_list |
+
 ## 更新日志
 - 2026-05-01 精简工具列表，替换所有非官方 fork 为官方源；删除 Sigpatches（改用 sys-patch）
 - 2026-04-18 添加 `Sphaira` 启动器

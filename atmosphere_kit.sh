@@ -184,7 +184,7 @@ cleanup_and_setup() {
     [ -e "$DESCRIPTION_FILE" ] && rm -f "$DESCRIPTION_FILE"
     
     # Create directory structure in batch
-    mkdir -p "$SWITCHSD_DIR"/{atmosphere/{config,hosts,contents/{420000000007E51Anx-ovlloader,0000000000534C56ReverseNX-RT,4200000000000010ldn_mitm,0100000000000352emuiibo,0100000000000F12Fizeau,420000000000000Bsys-patch,010000000000bd00MissionControl,00FF0000636C6BFFsys-clk},kips},bootloader/payloads,config/ultrahand/lang,switch/{Switch_90DNS_tester,DBI,Sphaira,.overlays,.packages}}
+    mkdir -p "$SWITCHSD_DIR"/{atmosphere/{config,hosts,contents,kips},bootloader/payloads,config/ultrahand/lang,switch/{Switch_90DNS_tester,DBI,Sphaira,.overlays,.packages}}
 }
 # Download function with retry logic
 download_file() {
