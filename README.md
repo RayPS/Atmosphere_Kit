@@ -18,7 +18,7 @@
     - [x] 菜单 `Ultrahand-Overlay` [From Here](https://github.com/ppkantorski/Ultrahand-Overlay/releases/latest)
   - Ovl 插件
     - [x] 金手指工具 `EdiZon` [From Here](https://github.com/proferabg/EdiZon-Overlay/releases/latest)
-    - [x] 系统模块管理 `ovl-sysmodules` [From Here](https://github.com/WerWolv/ovl-sysmodules/releases/latest)
+    - [x] 系统模块管理 `ovl-sysmodules` [From Here](https://github.com/ppkantorski/ovl-sysmodules/releases/latest)
     - [x] 系统监视 `StatusMonitor` [From Here](https://github.com/masagrator/Status-Monitor-Overlay/releases/latest)
     - [x] 掌机底座模式切换 `ReverseNX-RT` [From Here](https://github.com/masagrator/ReverseNX-RT/releases/latest)
     - [x] 局域网联机 `ldn_mitm` [From Here](https://github.com/spacemeowx2/ldn_mitm/releases/latest)

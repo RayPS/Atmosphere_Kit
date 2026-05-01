@@ -578,7 +578,6 @@ main() {
         log_info "Downloading system modules and overlays..."
         
         declare -A system_modules=(
-            ["WerWolv/nx-ovlloader"]="nx-ovlloader\.zip:nx-ovlloader"
             ["proferabg/EdiZon-Overlay"]="EdiZon-Overlay\.zip:EdiZon"
             ["masagrator/Status-Monitor-Overlay"]="Status-Monitor-Overlay\.zip:StatusMonitor"
             ["spacemeowx2/ldn_mitm"]="ldn_mitm.*\.zip:ldn_mitm"
@@ -588,6 +587,7 @@ main() {
             ["retronx-team/sys-clk"]="sys-clk.*\.zip:sys-clk"
             ["ndeadly/MissionControl"]="MissionControl.*\.zip:MissionControl"
         )
+        # Note: nx-ovlloader is bundled inside Ultrahand sdout.zip, no separate download needed.
         # Note: Ultrahand-Overlay uses sdout.zip (SdOut structure), handled separately below.
         # Note: ovl-sysmodules and ReverseNX-RT release only .ovl files, handled separately below.
         declare -A system_key_name=()
@@ -650,7 +650,7 @@ main() {
 
         # ovl-sysmodules: releases only .ovl file (no zip)
         local ovlsys_url ovlsys_tag
-        IFS='|' read -r ovlsys_url ovlsys_tag < <(get_latest_release_asset "WerWolv/ovl-sysmodules" "ovlSysmodules\\.ovl") || true
+        IFS='|' read -r ovlsys_url ovlsys_tag < <(get_latest_release_asset "ppkantorski/ovl-sysmodules" "ovlSysmodules\\.ovl") || true
         if [ -n "$ovlsys_url" ]; then
             mkdir -p switch/.overlays
             if download_file "$ovlsys_url" "switch/.overlays/ovlSysmodules.ovl" "ovl-sysmodules"; then
