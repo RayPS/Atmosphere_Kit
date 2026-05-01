@@ -189,7 +189,7 @@ cleanup_and_setup() {
     [ -e "$DESCRIPTION_FILE" ] && rm -f "$DESCRIPTION_FILE"
     
     # Create directory structure in batch
-    mkdir -p "$SWITCHSD_DIR"/{atmosphere/{config,config_emummc,hosts,contents,kips},bootloader/payloads,config/ultrahand/lang,switch/{Switch_90DNS_tester,DBI,Sphaira,.overlays,.packages}}
+    mkdir -p "$SWITCHSD_DIR"/{atmosphere/{config,config_emummc,hosts,contents,kips},bootloader/payloads,config/ultrahand/lang,switch/{Switch_90DNS_tester,DBI,.overlays,.packages}}
 }
 # Download function with retry logic
 download_file() {
