@@ -645,10 +645,9 @@ main() {
 
         # Tesla Menu: required menu host for selecting overlays such as ovl-sysmodules
         local tesla_menu_url tesla_menu_tag
-        IFS='|' read -r tesla_menu_url tesla_menu_tag < <(get_latest_release_asset "WerWolv/Tesla-Menu" "ovlmenu\\.ovl") || true
-        if [ -n "$tesla_menu_url" ]; then
-            mkdir -p switch/.overlays
-            if download_file "$tesla_menu_url" "switch/.overlays/ovlmenu.ovl" "Tesla Menu"; then
+        IFS='|' read -r tesla_menu_url tesla_menu_tag < <(get_latest_release_asset "WerWolv/Tesla-Menu" "ovlmenu\\.zip") || true
+        if [ -n "$tesla_menu_url" ] && download_file "$tesla_menu_url" "ovlmenu.zip" "Tesla Menu"; then
+            if extract_and_cleanup "ovlmenu.zip" "Tesla Menu"; then
                 record_item "Tesla Menu" "$tesla_menu_tag"
             else
                 record_failure "Tesla Menu"
