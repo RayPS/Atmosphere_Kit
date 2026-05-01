@@ -740,12 +740,12 @@ icon=bootloader/res/icon_stock.bmp
 stock=1
 id=ofw-sys
 
-[CFW SysNAND - Save Manager ONLY]
+[CFW SysNAND]
 emummc_force_disable=1
 fss0=atmosphere/package3
 atmosphere=1
 icon=bootloader/res/icon_Atmosphere_sysnand.bmp
-id=cfw-sys-save
+id=cfw-sys
 EOF
     
     # Generate exosphere.ini
