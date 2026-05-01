@@ -28,7 +28,6 @@
     - [x] 色彩调整 `Fizeau` [From Here](https://github.com/averne/Fizeau/releases/latest)
     - [x] 系统签名补丁 `sys-patch` [From Here](https://github.com/impeeza/sys-patch/releases/latest)
     - [x] 超频插件 `sys-clk` [From Here](https://github.com/retronx-team/sys-clk/releases/latest)
-    - [x] 调频插件 `OC Toolkit` [From Here](https://github.com/halop/OC_Toolkit_SC_EOS/releases/latest)
   - 其他
     - [x] 蓝牙手柄插件 `MissionControl` [From Here](https://github.com/ndeadly/MissionControl/releases/latest)
 
@@ -47,6 +46,17 @@
 ## 使用说明（仅适用于 `Linux`，科学上网环境）:
   - 安装 `jq` 工具
   - 运行脚本（switchScript.sh）
+  - 可选：自建 90DNS conntest 服务器后用 `MY_90DNS_IP=<你的IP> ./atmosphere_kit.sh` 覆盖默认 `127.0.0.1`
+
+## 关于 90DNS（强烈建议自建）
+
+CFW 模式下 Atmosphere 通过 `atmosphere/hosts/` 把任天堂域名劫持到本地黑洞，避免遥测/上报。
+
+- 默认 `127.0.0.1`：纯黑洞，conntest 失败，**最安全**，对存档导出等离线用途无影响。
+- 公共 90DNS（如 `95.216.149.205`）：第三方个人维护，**不推荐**，你的设备指纹会出现在陌生服务器日志里，且偶有宕机。
+- **自建 nginx 90DNS**：本仓库根目录提供 `90dns.conf`，参考其中部署说明在自己 VPS / 家庭路由器上跑一个，安全可控。
+
+仓库 CI 使用作者自建的 conntest 服务器，fork 自用请改为你自己的 IP 或保持默认 `127.0.0.1`。
 
 ## GitHub Actions 所需 Secrets
 | Secret | 说明 |
@@ -69,6 +79,7 @@
 | Switchbrew Title List（Switch 官方及 Homebrew Title ID 总表） | https://switchbrew.org/wiki/Title_list |
 
 ## 更新日志
+- 2026-05-02 自建 90DNS conntest 服务器；hosts 模板换成 nh-server 权威列表 + `MY_90DNS_IP` 变量驱动；移除 OC_Toolkit；sysMMC 补全遥测屏蔽；`DEBUG=1` 时屏蔽 `GITHUB_TOKEN` 泄露
 - 2026-05-01 精简工具列表，替换所有非官方 fork 为官方源；删除 Sigpatches（改用 sys-patch）
 - 2026-04-18 添加 `Sphaira` 启动器
 - 2026-03-01 精简优化 `switchScript.sh`

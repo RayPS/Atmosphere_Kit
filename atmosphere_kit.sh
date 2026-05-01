@@ -49,6 +49,11 @@ MAX_PARALLEL_DOWNLOADS="${MAX_PARALLEL_DOWNLOADS:-5}"
 DRY_RUN=0
 ONLY_MODE=0
 
+# 自建 90DNS conntest 服务器 IP；默认 127.0.0.1（纯黑洞，conntest 失败但任天堂收不到任何包）
+# 自建 nginx 的话用环境变量覆盖，例如：
+#   MY_90DNS_IP=192.168.1.10 ./atmosphere_kit.sh
+CONNTEST_IP="${MY_90DNS_IP:-127.0.0.1}"
+
 record_item() {
     local name="$1"
     local version="${2:-unknown}"
@@ -366,10 +371,16 @@ get_latest_release_asset() {
 github_api_get() {
     local url="$1"
     local -a args=( -fsSL -H "Accept: application/vnd.github+json" )
+    local _xtrace_was_on=0
     if [ -n "${GITHUB_TOKEN:-}" ]; then
+        case $- in *x*) _xtrace_was_on=1 ;; esac
+        { set +x; } 2>/dev/null
         args+=( -H "Authorization: Bearer ${GITHUB_TOKEN}" )
     fi
     curl "${args[@]}" "$url"
+    local rc=$?
+    if [ "$_xtrace_was_on" -eq 1 ]; then set -x; fi
+    return $rc
 }
 
 # Main download and setup function
@@ -671,31 +682,6 @@ main() {
         fi
     fi
     
-    # OC Toolkit (dual download)
-    if group_enabled special; then
-        local oc_info oc_tag kip_url toolkit_url
-        oc_info=$(get_release_json "halop/OC_Toolkit_SC_EOS") || true
-        if [ -n "$oc_info" ]; then
-            oc_tag=$(jq -r '.tag_name // "unknown"' <<< "$oc_info")
-            kip_url=$(jq -r '.assets[]?.browser_download_url | select(test("kip\\.zip"))' <<< "$oc_info" | head -n1)
-            toolkit_url=$(jq -r '.assets[]?.browser_download_url | select(test("OC\\.Toolkit\\.u\\.zip"))' <<< "$oc_info" | head -n1)
-        else
-            oc_tag=""
-            kip_url=""
-            toolkit_url=""
-        fi
-
-        if [ -n "$kip_url" ] && [ -n "$toolkit_url" ] && download_file "$kip_url" "kip.zip" "OC Toolkit KIP" && download_file "$toolkit_url" "OC.Toolkit.u.zip" "OC Toolkit"; then
-            log_success "OC_Toolkit_SC_EOS download"
-            extract_and_cleanup "kip.zip" "OC Toolkit KIP" "./atmosphere/kips/"
-            extract_and_cleanup "OC.Toolkit.u.zip" "OC Toolkit" "./switch/.packages/"
-            record_item "OC_Toolkit_SC_EOS" "$oc_tag"
-        else
-            log_error "OC_Toolkit_SC_EOS download"
-            record_failure "OC_Toolkit_SC_EOS"
-        fi
-    fi
-
     if group_enabled core; then
         validate_required_items
     fi
@@ -780,23 +766,67 @@ log_inverted=0
 EOF
     
     # Generate DNS blocking files
-    # emuMMC: block Nintendo servers
-    cat > ./atmosphere/hosts/emummc.txt << 'EOF'
-# 屏蔽任天堂服务器（仅 emuMMC）
-127.0.0.1 *nintendo.*
+    # 域名列表来源：nh-server/switch-guide blocking_nintendo.md（atmosphere DNS MITM 默认表）
+    # CONNTEST_IP 默认 127.0.0.1（纯黑洞）；若已自建 conntest server，用 MY_90DNS_IP 覆盖
+    cat > ./atmosphere/hosts/emummc.txt << EOF
+# =============================================================================
+# Nintendo telemetry / online services blocklist
+# 应用范围：emuMMC（同时被复制为 sysmmc.txt 应用到 CFW sysMMC）
+# Stock SysNAND 不加载 atmosphere，本文件不影响正版联机
+# =============================================================================
+
+# ---- Conntest endpoints (返回假 200 让连通性测试通过) ----
+${CONNTEST_IP} *conntest.nintendowifi.net
+${CONNTEST_IP} *ctest.cdn.nintendo.net
+
+# ---- Nintendo 主域名黑洞（按地区穷举，避免通配遗漏或误伤） ----
+127.0.0.1 *nintendo.com
+127.0.0.1 *nintendo.net
+127.0.0.1 *nintendo.jp
+127.0.0.1 *nintendo.co.jp
+127.0.0.1 *nintendo.co.uk
 127.0.0.1 *nintendo-europe.com
-127.0.0.1 *nintendoswitch.*
+127.0.0.1 *nintendowifi.net
+127.0.0.1 *nintendo.es
+127.0.0.1 *nintendo.co.kr
+127.0.0.1 *nintendo.tw
+127.0.0.1 *nintendo.com.hk
+127.0.0.1 *nintendo.com.au
+127.0.0.1 *nintendo.co.nz
+127.0.0.1 *nintendo.at
+127.0.0.1 *nintendo.be
+127.0.0.1 *nintendods.cz
+127.0.0.1 *nintendo.dk
+127.0.0.1 *nintendo.de
+127.0.0.1 *nintendo.fi
+127.0.0.1 *nintendo.fr
+127.0.0.1 *nintendo.gr
+127.0.0.1 *nintendo.hu
+127.0.0.1 *nintendo.it
+127.0.0.1 *nintendo.nl
+127.0.0.1 *nintendo.no
+127.0.0.1 *nintendo.pt
+127.0.0.1 *nintendo.ru
+127.0.0.1 *nintendo.co.za
+127.0.0.1 *nintendo.se
+127.0.0.1 *nintendo.ch
+127.0.0.1 *nintendo.pl
+
+# ---- Switch 在线服务/商店域名 ----
+127.0.0.1 *nintendoswitch.com
+127.0.0.1 *nintendoswitch.com.cn
+127.0.0.1 *nintendoswitch.cn
+
+# ---- Push notification / report endpoints ----
+127.0.0.1 receive-lp1.er.srv.nintendo.net
+127.0.0.1 receive-lp1.dg.srv.nintendo.net
+
+# ---- 第三方广告/统计（与 Switch 内置浏览器、bcat 相关） ----
 127.0.0.1 ads.doubleclick.net
 127.0.0.1 s.ytimg.com
 127.0.0.1 ad.youtube.com
 127.0.0.1 ads.youtube.com
 127.0.0.1 clients1.google.com
-207.246.121.77 *conntest.nintendowifi.net
-207.246.121.77 *ctest.cdn.nintendo.net
-69.25.139.140 *ctest.cdn.n.nintendoswitch.cn
-95.216.149.205 *conntest.nintendowifi.net
-95.216.149.205 *ctest.cdn.nintendo.net
-95.216.149.205 *90dns.test
 EOF
     # CFW sysMMC is for short save-management maintenance only; block Nintendo endpoints as a guardrail.
     # Stock SysNAND does not load Atmosphere hosts and remains the normal online-play entry.
@@ -841,6 +871,42 @@ enable_external_bluetooth_db = u8!0x1
 [usb]
 ; 强制开启USB 3.0
 usb30_force_enabled = u8!0x1
+
+; =============================================
+; sysMMC 遥测屏蔽 — 仅关闭后台上传/同步通道
+; CFW sysMMC 短期维护（存档导出）期间防止 prepo 队列
+; 累积 CFW 事件，避免回到 Stock SysNAND 后被原版上传
+; 不修改任何系统行为/授权校验，正版联机回 Stock 完全正常
+; =============================================
+
+[prepo]
+transmission_interval_min = u32!0x7FFFFFFF
+save_system_report = u8!0x0
+
+[bgtc]
+enable_halfawake = u32!0x0
+minimum_interval_normal = u32!0x7FFFFFFF
+minimum_interval_save = u32!0x7FFFFFFF
+
+[npns]
+background_processing = u8!0x0
+sleep_periodic_interval = u32!0x7FFFFFFF
+
+[ns.notification]
+enable_download_task_list = u8!0x0
+enable_network_update = u8!0x0
+enable_request_on_cold_boot = u8!0x0
+retry_interval_min = u32!0x7FFFFFFF
+
+[olsc]
+default_auto_upload_global_setting = u8!0x0
+default_auto_download_global_setting = u8!0x0
+
+[systemupdate]
+bgnup_retry_seconds = u32!0x7FFFFFFF
+
+[account.daemon]
+background_awaking_periodicity = u32!0x7FFFFFFF
 EOF
 
     # Generate emuMMC-only system_settings.ini (overrides global for emuMMC)
