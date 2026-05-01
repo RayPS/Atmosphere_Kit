@@ -554,14 +554,6 @@ main() {
     # Special downloads with custom handling
     if group_enabled special; then
         log_info "Downloading special packages..."
-        
-        # Sphaira - homebrew menu
-        local sphaira_url sphaira_tag
-        IFS='|' read -r sphaira_url sphaira_tag < <(get_latest_release_asset "ITotalJustice/sphaira" "sphaira\\.zip") || true
-        if [ -n "$sphaira_url" ] && download_file "$sphaira_url" "sphaira.zip" "Sphaira"; then
-            extract_and_cleanup "sphaira.zip" "Sphaira"
-            record_item "Sphaira" "$sphaira_tag"
-        fi
 
     fi
 
