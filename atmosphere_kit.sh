@@ -817,18 +817,8 @@ ${CONNTEST_IP} *ctest.cdn.nintendo.net
 127.0.0.1 *nintendoswitch.com.cn
 127.0.0.1 *nintendoswitch.cn
 
-# ---- Push notification / report endpoints ----
-127.0.0.1 receive-lp1.er.srv.nintendo.net
-127.0.0.1 receive-lp1.dg.srv.nintendo.net
-
-# ---- 第三方广告/统计（与 Switch 内置浏览器、bcat 相关） ----
-127.0.0.1 ads.doubleclick.net
-127.0.0.1 s.ytimg.com
-127.0.0.1 ad.youtube.com
-127.0.0.1 ads.youtube.com
-127.0.0.1 clients1.google.com
 EOF
-    # CFW sysMMC is for short save-management maintenance only; block Nintendo endpoints as a guardrail.
+    # sysmmc.txt: same blocklist as emummc (including conntest fake-success via CONNTEST_IP).
     # Stock SysNAND does not load Atmosphere hosts and remains the normal online-play entry.
     cp ./atmosphere/hosts/emummc.txt ./atmosphere/hosts/sysmmc.txt
     
