@@ -776,11 +776,9 @@ EOF
 # Nintendo telemetry / online services blocklist
 # 应用范围：emuMMC（同时被复制为 sysmmc.txt 应用到 CFW sysMMC）
 # Stock SysNAND 不加载 atmosphere，本文件不影响正版联机
+# 注意：Atmosphere DNS MITM 采用"后定义优先"规则（last-defined wins）。
+# 更具体的条目必须放在宽通配符之后，否则会被宽通配符覆盖。
 # =============================================================================
-
-# ---- Conntest endpoints (返回假 200 让连通性测试通过) ----
-${CONNTEST_IP} *conntest.nintendowifi.net
-${CONNTEST_IP} *ctest.cdn.nintendo.net
 
 # ---- Nintendo 主域名黑洞（按地区穷举，避免通配遗漏或误伤） ----
 127.0.0.1 *nintendo.com
@@ -819,6 +817,11 @@ ${CONNTEST_IP} *ctest.cdn.nintendo.net
 127.0.0.1 *nintendoswitch.com
 127.0.0.1 *nintendoswitch.com.cn
 127.0.0.1 *nintendoswitch.cn
+
+
+# last-defined wins：这两条在列表最前端，确保 conntest 返回假 200 而非黑洞
+${CONNTEST_IP} *conntest.nintendowifi.net
+${CONNTEST_IP} *ctest.cdn.nintendo.net
 
 EOF
     # sysmmc.txt: same blocklist as emummc (including conntest fake-success via CONNTEST_IP).
