@@ -184,7 +184,7 @@ cleanup_and_setup() {
     [ -e "$DESCRIPTION_FILE" ] && rm -f "$DESCRIPTION_FILE"
     
     # Create directory structure in batch
-    mkdir -p "$SWITCHSD_DIR"/{atmosphere/{config,hosts,contents,kips},bootloader/payloads,config/ultrahand/lang,switch/{Switch_90DNS_tester,DBI,Sphaira,.overlays,.packages}}
+    mkdir -p "$SWITCHSD_DIR"/{atmosphere/{config,config_emummc,hosts,contents,kips},bootloader/payloads,config/ultrahand/lang,switch/{Switch_90DNS_tester,DBI,Sphaira,.overlays,.packages}}
 }
 # Download function with retry logic
 download_file() {
@@ -643,6 +643,20 @@ main() {
             record_failure "ovl-sysmodules"
         fi
 
+        # Tesla Menu: required menu host for selecting overlays such as ovl-sysmodules
+        local tesla_menu_url tesla_menu_tag
+        IFS='|' read -r tesla_menu_url tesla_menu_tag < <(get_latest_release_asset "WerWolv/Tesla-Menu" "ovlmenu\\.ovl") || true
+        if [ -n "$tesla_menu_url" ]; then
+            mkdir -p switch/.overlays
+            if download_file "$tesla_menu_url" "switch/.overlays/ovlmenu.ovl" "Tesla Menu"; then
+                record_item "Tesla Menu" "$tesla_menu_tag"
+            else
+                record_failure "Tesla Menu"
+            fi
+        else
+            record_failure "Tesla Menu"
+        fi
+
         # ReverseNX-RT: releases only .ovl file (no zip)
         local reversenx_url reversenx_tag
         IFS='|' read -r reversenx_url reversenx_tag < <(get_latest_release_asset "masagrator/ReverseNX-RT" "ReverseNX-RT.*\\.ovl") || true
@@ -734,32 +748,31 @@ atmosphere=1
 icon=bootloader/res/icon_Atmosphere_emunand.bmp
 id=cfw-emu
 
-[CFW (sysMMC)]
-emummc_force_disable=1
-fss0=atmosphere/package3
-kip1patch=nosigchk
-atmosphere=1
-icon=bootloader/res/icon_Atmosphere_sysnand.bmp
-id=cfw-sys
-
 [Stock SysNAND]
 emummc_force_disable=1
 fss0=atmosphere/package3
 icon=bootloader/res/icon_stock.bmp
 stock=1
 id=ofw-sys
+
+[CFW SysNAND - Save Manager ONLY]
+emummc_force_disable=1
+fss0=atmosphere/package3
+atmosphere=1
+icon=bootloader/res/icon_Atmosphere_sysnand.bmp
+id=cfw-sys-save
 EOF
     
     # Generate exosphere.ini
     cat > ./exosphere.ini << 'EOF'
 [exosphere]
-debugmode=1
+debugmode=0
 debugmode_user=0
 disable_user_exception_handlers=0
 enable_user_pmu_access=0
-; 控制真实系统启用隐身模式。
-blank_prodinfo_sysmmc=1
-; 控制虚拟系统启用隐身模式。
+; 真实系统保留原始序列号，可正常联网使用正版游戏。
+blank_prodinfo_sysmmc=0
+; 虚拟系统屏蔽序列号，防止 CFW 环境暴露真机信息。
 blank_prodinfo_emummc=1
 allow_writing_to_cal_sysmmc=0
 log_port=0
@@ -768,7 +781,9 @@ log_inverted=0
 EOF
     
     # Generate DNS blocking files
-    local dns_content='# 屏蔽任天堂服务器
+    # emuMMC: block Nintendo servers
+    cat > ./atmosphere/hosts/emummc.txt << 'EOF'
+# 屏蔽任天堂服务器（仅 emuMMC）
 127.0.0.1 *nintendo.*
 127.0.0.1 *nintendo-europe.com
 127.0.0.1 *nintendoswitch.*
@@ -782,10 +797,11 @@ EOF
 69.25.139.140 *ctest.cdn.n.nintendoswitch.cn
 95.216.149.205 *conntest.nintendowifi.net
 95.216.149.205 *ctest.cdn.nintendo.net
-95.216.149.205 *90dns.test'
-    
-    echo "$dns_content" > ./atmosphere/hosts/emummc.txt
-    echo "$dns_content" > ./atmosphere/hosts/sysmmc.txt
+95.216.149.205 *90dns.test
+EOF
+    # CFW sysMMC is for short save-management maintenance only; block Nintendo endpoints as a guardrail.
+    # Stock SysNAND does not load Atmosphere hosts and remains the normal online-play entry.
+    cp ./atmosphere/hosts/emummc.txt ./atmosphere/hosts/sysmmc.txt
     
     # Generate boot.ini
     cat > ./boot.ini << 'EOF'
@@ -802,12 +818,8 @@ override_address_space=39_bit
 override_key_0=R
 EOF
     
-    # Generate system_settings.ini
+    # Generate system_settings.ini (global, sysMMC-safe minimal config)
     cat > ./atmosphere/config/system_settings.ini << 'EOF'
-; =============================================
-; Atmosphere 防封禁核心配置文件
-; =============================================
-
 [eupld]
 ; 禁用错误报告上传
 upload_enabled = u8!0x0
@@ -821,7 +833,7 @@ ease_nro_restriction = u8!0x1
 dmnt_cheats_enabled_by_default = u8!0x0
 ; 崩溃10秒后自动重启 (10000毫秒)
 fatal_auto_reboot_interval = u64!0x2710
-; 启用DNS屏蔽，阻止连接任天堂服务器
+; 启用 DNS MITM；emuMMC 与 CFW sysMMC 维护模式均阻断任天堂端点
 enable_dns_mitm = u8!0x1
 add_defaults_to_dns_hosts = u8!0x1
 ; 虚拟系统使用外部蓝牙配对
@@ -830,79 +842,85 @@ enable_external_bluetooth_db = u8!0x1
 [usb]
 ; 强制开启USB 3.0
 usb30_force_enabled = u8!0x1
+EOF
+
+    # Generate emuMMC-only system_settings.ini (overrides global for emuMMC)
+    cat > ./atmosphere/config_emummc/system_settings.ini << 'EOF'
+; =============================================
+; emuMMC 专属配置 — 覆盖全局 config/system_settings.ini
+; =============================================
+
+[eupld]
+upload_enabled = u8!0x0
+
+[ro]
+ease_nro_restriction = u8!0x1
+
+[atmosphere]
+dmnt_cheats_enabled_by_default = u8!0x0
+fatal_auto_reboot_interval = u64!0x2710
+enable_dns_mitm = u8!0x1
+add_defaults_to_dns_hosts = u8!0x1
+enable_external_bluetooth_db = u8!0x1
+
+[usb]
+usb30_force_enabled = u8!0x1
 
 [tc]
-; 温控设置 - 保持默认即可
+; emuMMC 禁用热管理休眠，避免降频影响性能
 sleep_enabled = u8!0x0
 
 ; =============================================
-; 🛡 防封禁核心配置 - 禁用所有任天堂服务
+; 防遥测 — 禁用所有后台任天堂服务
 ; =============================================
 
 [bgtc]
-; 禁用所有后台任务
 enable_halfawake = u32!0x0
 minimum_interval_normal = u32!0x7FFFFFFF
 minimum_interval_save = u32!0x7FFFFFFF
 
 [npns]
-; 禁用新闻推送服务
 background_processing = u8!0x0
 sleep_periodic_interval = u32!0x7FFFFFFF
 
 [ns.notification]
-; 完全禁用系统更新检查和服务通信
 enable_download_task_list = u8!0x0
 enable_network_update = u8!0x0
 enable_request_on_cold_boot = u8!0x0
 retry_interval_min = u32!0x7FFFFFFF
 
 [account]
-; 禁用账户验证和许可证检查
 na_required_for_network_service = u8!0x0
 na_license_verification_enabled = u8!0x0
 
 [capsrv]
-; 禁用截图和录像验证
 enable_album_screenshot_filedata_verification = u8!0x0
 enable_album_movie_filehash_verification = u8!0x0
 
 [friends]
-; 禁用好友后台服务
 background_processing = u8!0x0
 
 [prepo]
-; 禁用数据统计上报
 transmission_interval_min = u32!0x7FFFFFFF
 save_system_report = u8!0x0
 
 [olsc]
-; 禁用云存档服务
 default_auto_upload_global_setting = u8!0x0
 default_auto_download_global_setting = u8!0x0
 
 [ns.rights]
-; 跳过账户验证（重要权限检查）
 skip_account_validation_on_rights_check = u8!0x1
 
-; =============================================
-; ⚡ 性能优化配置
-; =============================================
-
 [account.daemon]
-; 延长账户服务间隔
 background_awaking_periodicity = u32!0x7FFFFFFF
 
 [notification.presenter]
-; 禁用通知重试
 connection_retry_count = u32!0x0
 
 [systemupdate]
-; 禁用系统更新重试
 bgnup_retry_seconds = u32!0x7FFFFFFF
 
 [pctl]
-; 延长家长控制检查间隔
 intermittent_task_interval_seconds = u32!0x7FFFFFFF
 EOF
     
@@ -911,8 +929,7 @@ EOF
 
 finalize_setup() {
     log_info "Finalizing setup..."
-    local removed_boot2_flags=0
-    
+
     # Rename hekate payload
     find . -name "*hekate_ctcaer*" -exec mv {} payload.bin \; 2>/dev/null && \
         log_success "Rename hekate_ctcaer_*.bin to payload.bin" || \
@@ -921,11 +938,36 @@ finalize_setup() {
     # Remove unneeded files
     rm -f switch/haze.nro switch/reboot_to_payload.nro
 
+    # Keep sysmodules installed but disabled by default. Only nx-ovlloader is
+    # booted so Tesla Menu can expose ovl-sysmodules for manual toggling.
     if [ -d atmosphere/contents ]; then
+        local removed_boot2_flags=0
+        local ovlloader_dir=""
+        local title_dir
+
         removed_boot2_flags=$(find atmosphere/contents -type f -name "boot2.flag" -print | wc -l | tr -d ' ')
         find atmosphere/contents -type f -name "boot2.flag" -delete
+
+        for title_dir in atmosphere/contents/*/; do
+            [ -d "$title_dir" ] || continue
+            case "$(basename "$title_dir")" in
+                420000000007E51A|420000000007E51A*)
+                    ovlloader_dir="$title_dir"
+                    break
+                    ;;
+            esac
+        done
+
+        if [ -n "$ovlloader_dir" ]; then
+            mkdir -p "${ovlloader_dir}/flags"
+            touch "${ovlloader_dir}/flags/boot2.flag"
+            log_success "Enabled nx-ovlloader for Tesla/ovl-sysmodules"
+        else
+            log_error "Enable nx-ovlloader for Tesla/ovl-sysmodules (not found)"
+            record_failure "nx-ovlloader boot2 enable"
+        fi
+        log_info "Removed ${removed_boot2_flags} other boot2.flag file(s) from atmosphere/contents"
     fi
-    log_info "Removed ${removed_boot2_flags} boot2.flag file(s) from atmosphere/contents"
     
     log_success "Setup finalization"
 }
