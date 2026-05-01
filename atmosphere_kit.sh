@@ -501,8 +501,8 @@ main() {
         
         declare -A homebrew_apps=(
             ["meganukebmp/Switch_90DNS_tester"]="Switch_90DNS_tester\.nro:switch/Switch_90DNS_tester/Switch_90DNS_tester.nro:Switch_90DNS_tester"
-            ["rashevskyv/dbi"]="DBI\.nro:switch/DBI/DBI.nro:DBI"
         )
+        # Note: DBI is handled in the special group (DBIPatcher with zh-CN translation)
         declare -A homebrew_key_name=()
         declare -A homebrew_key_tag=()
         declare -A homebrew_key_target=()
@@ -554,6 +554,22 @@ main() {
     # Special downloads with custom handling
     if group_enabled special; then
         log_info "Downloading special packages..."
+
+        # DBI (zh-CN patched): download DBI.nro + translation_zhcn.bin from DBIPatcher
+        local dbi_url dbi_tag dbi_trans_url
+        IFS='|' read -r dbi_url dbi_tag < <(get_latest_release_asset "rashevskyv/DBIPatcher" "^DBI\\.nro$") || true
+        IFS='|' read -r dbi_trans_url _ < <(get_latest_release_asset "rashevskyv/DBIPatcher" "translation_zhcn\\.bin") || true
+        if [ -n "$dbi_url" ] && [ -n "$dbi_trans_url" ]; then
+            mkdir -p switch/DBI
+            if download_file "$dbi_url" "switch/DBI/DBI.nro" "DBI" && \
+               download_file "$dbi_trans_url" "switch/DBI/translation.bin" "DBI (zh-CN)"; then
+                record_item "DBI" "$dbi_tag"
+            else
+                record_failure "DBI"
+            fi
+        else
+            record_failure "DBI"
+        fi
 
     fi
 
@@ -621,7 +637,7 @@ main() {
             record_item "emuiibo" "$emuiibo_tag"
         fi
 
-        # Ultrahand-Overlay: releases sdout.zip with SdOut/ directory structure
+        # Ultrahand-Overlay: sdout.zip contains full SD structure including ovlmenu.ovl and lang files
         local ultrahand_url ultrahand_tag
         IFS='|' read -r ultrahand_url ultrahand_tag < <(get_latest_release_asset "ppkantorski/Ultrahand-Overlay" "sdout\\.zip") || true
         if [ -n "$ultrahand_url" ] && download_file "$ultrahand_url" "ultrahand_sdout.zip" "Ultrahand-Overlay"; then
@@ -644,19 +660,6 @@ main() {
             fi
         else
             record_failure "ovl-sysmodules"
-        fi
-
-        # Tesla Menu: required menu host for selecting overlays such as ovl-sysmodules
-        local tesla_menu_url tesla_menu_tag
-        IFS='|' read -r tesla_menu_url tesla_menu_tag < <(get_latest_release_asset "WerWolv/Tesla-Menu" "ovlmenu\\.zip") || true
-        if [ -n "$tesla_menu_url" ] && download_file "$tesla_menu_url" "ovlmenu.zip" "Tesla Menu"; then
-            if extract_and_cleanup "ovlmenu.zip" "Tesla Menu"; then
-                record_item "Tesla Menu" "$tesla_menu_tag"
-            else
-                record_failure "Tesla Menu"
-            fi
-        else
-            record_failure "Tesla Menu"
         fi
 
         # ReverseNX-RT: releases only .ovl file (no zip)
