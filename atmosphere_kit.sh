@@ -627,6 +627,14 @@ main() {
                 record_item "$name" "$tag"
             fi
         done
+
+        # sys-clk does not ship a toolbox.json; generate one so ovl-sysmodules can detect it
+        local sysclk_dir="atmosphere/contents/00FF0000636C6BFF"
+        if [ -f "${sysclk_dir}/exefs.nsp" ] && [ ! -f "${sysclk_dir}/toolbox.json" ]; then
+            cat > "${sysclk_dir}/toolbox.json" <<'EOF'
+{"name": "sys-clk", "tid": "00FF0000636C6BFF", "requires_reboot": false}
+EOF
+        fi
         
         # Emuiibo (special handling)
         local emuiibo_url emuiibo_tag
