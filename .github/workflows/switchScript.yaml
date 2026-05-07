@@ -52,7 +52,6 @@ jobs:
           allowUpdates: true
           tag: ${{ env.tag_name }}
           commit: main
-          token: ${{ secrets.TOKEN }}
           body: "${{ steps.description.outputs.content }}"
           artifacts: "SwitchSD.zip"
 
