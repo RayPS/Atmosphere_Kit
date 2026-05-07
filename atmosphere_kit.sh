@@ -864,6 +864,8 @@ EOF
 # last-defined wins：这两条在列表最前端，确保 conntest 返回假 200 而非黑洞
 ${CONNTEST_IP} *conntest.nintendowifi.net
 ${CONNTEST_IP} *ctest.cdn.nintendo.net
+${CONNTEST_IP} *90dns.test'
+
 
 EOF
     # sysmmc.txt: same blocklist as emummc (including conntest fake-success via CONNTEST_IP).

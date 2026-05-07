@@ -15,6 +15,7 @@ permissions:
 env:
   SCRIPT_SH: atmosphere_kit.sh
   TZ: Asia/Shanghai
+  MY_90DNS_IP: 95.216.149.205
 
 jobs:
   build:
