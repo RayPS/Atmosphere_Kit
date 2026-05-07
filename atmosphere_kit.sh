@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 set -E
 
@@ -28,8 +28,8 @@ readonly YELLOW='\033[33m'
 readonly NC='\033[0m' # No Color
 
 # Logging functions
-log_success() { echo -e "${1} ${GREEN}success${NC}."; }
-log_error() { echo -e "${1} ${RED}failed${NC}."; }
+log_success() { echo -e "${GREEN}[SUCCESS]${NC} ${1}"; }
+log_error() { echo -e "${RED}[ERROR]${NC} ${1}"; }
 log_info() { echo -e "${YELLOW}[INFO]${NC} ${1}"; }
 
 # Description lines (name + version)
@@ -455,6 +455,7 @@ main() {
         declare -A payloads=(
             ["Kofysh/Lockpick_RCM"]="Lockpick_RCM\.bin:Lockpick_RCM"
             ["suchmememanyskill/TegraExplorer"]="TegraExplorer\.bin:TegraExplorer"
+            ["zdm65477730/CommonProblemResolver"]="CommonProblemResolver\.bin:CommonProblemResolver"
         )
         declare -A payload_key_name=()
         declare -A payload_key_tag=()
@@ -501,8 +502,11 @@ main() {
         
         declare -A homebrew_apps=(
             ["meganukebmp/Switch_90DNS_tester"]="Switch_90DNS_tester\.nro:switch/Switch_90DNS_tester/Switch_90DNS_tester.nro:Switch_90DNS_tester"
+            ["WerWolv/Hekate-Toolbox"]="HekateToolbox\.nro:switch/HekateToolbox/HekateToolbox.nro:HekateToolbox"
+            ["J-D-K/JKSV"]="JKSV\.nro:switch/JKSV/JKSV.nro:JKSV"
+            ["CaiMiao/Tencent-switcher-GUI"]="tencent-switcher-gui\.nro:switch/tencent-switcher-gui/tencent-switcher-gui.nro:Tencent-switcher-GUI"
+            ["fortheusers/hb-appstore"]="appstore\.nro:switch/HB-App-Store/appstore.nro:hb-appstore"
         )
-        # Note: DBI is handled in the special group (DBIPatcher with zh-CN translation)
         declare -A homebrew_key_name=()
         declare -A homebrew_key_tag=()
         declare -A homebrew_key_target=()
@@ -557,7 +561,7 @@ main() {
 
         # DBI (zh-CN patched): download DBI.nro + translation_zhcn.bin from DBIPatcher
         local dbi_url dbi_tag dbi_trans_url
-        IFS='|' read -r dbi_url dbi_tag < <(get_latest_release_asset "rashevskyv/DBIPatcher" "^DBI\\.nro$") || true
+        IFS='|' read -r dbi_url dbi_tag < <(get_latest_release_asset "rashevskyv/DBIPatcher" "DBI\\.nro") || true
         IFS='|' read -r dbi_trans_url _ < <(get_latest_release_asset "rashevskyv/DBIPatcher" "translation_zhcn\\.bin") || true
         if [ -n "$dbi_url" ] && [ -n "$dbi_trans_url" ]; then
             mkdir -p switch/DBI
@@ -571,6 +575,44 @@ main() {
             record_failure "DBI"
         fi
 
+        # Goldleaf
+        local goldleaf_url goldleaf_tag
+        IFS='|' read -r goldleaf_url goldleaf_tag < <(get_latest_release_asset "XorTroll/Goldleaf" "Goldleaf\\.nro") || true
+        if [ -n "$goldleaf_url" ]; then
+            mkdir -p switch/Goldleaf
+            if download_file "$goldleaf_url" "switch/Goldleaf/Goldleaf.nro" "Goldleaf"; then
+                record_item "Goldleaf" "$goldleaf_tag"
+            else
+                record_failure "Goldleaf"
+            fi
+        else
+            record_failure "Goldleaf"
+        fi
+
+        # Sphaira - homebrew menu
+        local sphaira_url sphaira_tag
+        IFS='|' read -r sphaira_url sphaira_tag < <(get_latest_release_asset "ITotalJustice/sphaira" "sphaira\\.zip") || true
+        if [ -n "$sphaira_url" ] && download_file "$sphaira_url" "sphaira.zip" "Sphaira"; then
+            extract_and_cleanup "sphaira.zip" "Sphaira"
+            record_item "Sphaira" "$sphaira_tag"
+        fi
+        
+        # AIO Switch Updater
+        local aio_url aio_tag
+        IFS='|' read -r aio_url aio_tag < <(get_latest_release_asset "HamletDuFromage/aio-switch-updater" "aio-switch-updater\\.zip") || true
+        if [ -n "$aio_url" ] && download_file "$aio_url" "aio-switch-updater.zip" "aio-switch-updater"; then
+            extract_and_cleanup "aio-switch-updater.zip" "aio-switch-updater"
+            record_item "aio-switch-updater" "$aio_tag"
+        fi
+        
+        # Wiliwili
+        local wiliwili_url wiliwili_tag
+        IFS='|' read -r wiliwili_url wiliwili_tag < <(get_latest_release_asset "xfangfang/wiliwili" "wiliwili-NintendoSwitch\\.zip") || true
+        if [ -n "$wiliwili_url" ] && download_file "$wiliwili_url" "wiliwili-NintendoSwitch.zip" "wiliwili"; then
+            extract_and_cleanup "wiliwili-NintendoSwitch.zip" "wiliwili"
+            [ -d wiliwili ] && mkdir -p ./switch/wiliwili/ && mv wiliwili/wiliwili.nro ./switch/wiliwili/ && rm -rf wiliwili
+            record_item "wiliwili" "$wiliwili_tag"
+        fi
     fi
 
     # System modules and overlays
