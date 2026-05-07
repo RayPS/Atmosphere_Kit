@@ -502,6 +502,7 @@ main() {
         
         declare -A homebrew_apps=(
             ["meganukebmp/Switch_90DNS_tester"]="Switch_90DNS_tester\.nro:switch/Switch_90DNS_tester/Switch_90DNS_tester.nro:Switch_90DNS_tester"
+            ["gzk47/DBIPatcher"]="DBI.*\.en\.nro:switch/DBI/DBI.nro:DBI"
             ["WerWolv/Hekate-Toolbox"]="HekateToolbox\.nro:switch/HekateToolbox/HekateToolbox.nro:HekateToolbox"
             ["J-D-K/JKSV"]="JKSV\.nro:switch/JKSV/JKSV.nro:JKSV"
             ["CaiMiao/Tencent-switcher-GUI"]="tencent-switcher-gui\.nro:switch/tencent-switcher-gui/tencent-switcher-gui.nro:Tencent-switcher-GUI"
@@ -558,22 +559,6 @@ main() {
     # Special downloads with custom handling
     if group_enabled special; then
         log_info "Downloading special packages..."
-
-        # DBI (zh-CN patched): download DBI.nro + translation_zhcn.bin from DBIPatcher
-        local dbi_url dbi_tag dbi_trans_url
-        IFS='|' read -r dbi_url dbi_tag < <(get_latest_release_asset "rashevskyv/DBIPatcher" "DBI\\.nro") || true
-        IFS='|' read -r dbi_trans_url _ < <(get_latest_release_asset "rashevskyv/DBIPatcher" "translation_zhcn\\.bin") || true
-        if [ -n "$dbi_url" ] && [ -n "$dbi_trans_url" ]; then
-            mkdir -p switch/DBI
-            if download_file "$dbi_url" "switch/DBI/DBI.nro" "DBI" && \
-               download_file "$dbi_trans_url" "switch/DBI/translation.bin" "DBI (zh-CN)"; then
-                record_item "DBI" "$dbi_tag"
-            else
-                record_failure "DBI"
-            fi
-        else
-            record_failure "DBI"
-        fi
 
         # Goldleaf
         local goldleaf_url goldleaf_tag
