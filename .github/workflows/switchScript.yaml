@@ -9,6 +9,9 @@ on:
       - "atmosphere_kit.sh"
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 env:
   SCRIPT_SH: atmosphere_kit.sh
   TZ: Asia/Shanghai
