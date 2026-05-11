@@ -505,6 +505,7 @@ main() {
             ["gzk47/DBIPatcher"]="DBI.*\.en\.nro:switch/DBI/DBI.nro:DBI"
             ["WerWolv/Hekate-Toolbox"]="HekateToolbox\.nro:switch/HekateToolbox/HekateToolbox.nro:HekateToolbox"
             ["J-D-K/JKSV"]="JKSV\.nro:switch/JKSV/JKSV.nro:JKSV"
+            ["XorTroll/Goldleaf"]="Goldleaf\.nro:switch/Goldleaf/Goldleaf.nro:Goldleaf"
             ["CaiMiao/Tencent-switcher-GUI"]="tencent-switcher-gui\.nro:switch/tencent-switcher-gui/tencent-switcher-gui.nro:Tencent-switcher-GUI"
             ["fortheusers/hb-appstore"]="appstore\.nro:switch/HB-App-Store/appstore.nro:hb-appstore"
         )
@@ -560,20 +561,6 @@ main() {
     if group_enabled special; then
         log_info "Downloading special packages..."
 
-        # Goldleaf
-        local goldleaf_url goldleaf_tag
-        IFS='|' read -r goldleaf_url goldleaf_tag < <(get_latest_release_asset "XorTroll/Goldleaf" "Goldleaf\\.nro") || true
-        if [ -n "$goldleaf_url" ]; then
-            mkdir -p switch/Goldleaf
-            if download_file "$goldleaf_url" "switch/Goldleaf/Goldleaf.nro" "Goldleaf"; then
-                record_item "Goldleaf" "$goldleaf_tag"
-            else
-                record_failure "Goldleaf"
-            fi
-        else
-            record_failure "Goldleaf"
-        fi
-
         # Sphaira - homebrew menu
         local sphaira_url sphaira_tag
         IFS='|' read -r sphaira_url sphaira_tag < <(get_latest_release_asset "ITotalJustice/sphaira" "sphaira\\.zip") || true
@@ -605,14 +592,12 @@ main() {
         log_info "Downloading system modules and overlays..."
         
         declare -A system_modules=(
-            ["proferabg/EdiZon-Overlay"]="EdiZon-Overlay\.zip:EdiZon"
+            ["tomvita/Breeze-Beta"]="Breeze\.zip:Breeze"
             ["masagrator/Status-Monitor-Overlay"]="Status-Monitor-Overlay\.zip:StatusMonitor"
-            ["spacemeowx2/ldn_mitm"]="ldn_mitm.*\.zip:ldn_mitm"
             ["nedex/QuickNTP"]="quickntp.*\.zip:QuickNTP"
-            ["averne/Fizeau"]="Fizeau.*\.zip:Fizeau"
             ["impeeza/sys-patch"]="sys-patch.*\.zip:sys-patch"
             ["retronx-team/sys-clk"]="sys-clk.*\.zip:sys-clk"
-            ["ndeadly/MissionControl"]="MissionControl.*\.zip:MissionControl"
+            ["masagrator/SaltyNX"]="SaltyNX\.zip:SaltyNX"
         )
         # Note: nx-ovlloader is bundled inside Ultrahand sdout.zip, no separate download needed.
         # Note: Ultrahand-Overlay uses sdout.zip (SdOut structure), handled separately below.
@@ -1026,7 +1011,7 @@ finalize_setup() {
         log_error "Rename hekate_ctcaer_*.bin to payload.bin"
     
     # Remove unneeded files
-    rm -f switch/haze.nro switch/reboot_to_payload.nro
+    rm -f switch/haze.nro switch/reboot_to_payload.nro switch/reboot_to_hekate.nro
 
     # Keep sysmodules installed but disabled by default. Only nx-ovlloader is
     # booted so Tesla Menu can expose ovl-sysmodules for manual toggling.
